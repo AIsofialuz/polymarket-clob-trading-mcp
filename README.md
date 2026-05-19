@@ -1,4 +1,4 @@
-# Polymarket Trading MCP
+# Polymarket CLOB Trading MCP
 
 An agentic MCP server for trading on [Polymarket](https://polymarket.com) — the world's largest prediction market.
 
@@ -22,8 +22,8 @@ An agentic MCP server for trading on [Polymarket](https://polymarket.com) — th
 ### Step 1 — Install
 
 ```bash
-clawhub install polymarket-kelly-trading-mcp
-cd skills/polymarket-kelly-trading-mcp
+openclaw skills install polymarket-clob-trading-mcp
+cd skills/polymarket-clob-trading-mcp
 npm install
 ```
 
@@ -49,7 +49,7 @@ Everything else (RPC endpoint, CLOB API keys) is auto-configured on first boot.
     "polymarket-trading": {
       "command": "node",
       "args": ["node_modules/tsx/dist/cli.mjs", "trading-server.ts"],
-      "cwd": "/path/to/skills/polymarket-kelly-trading-mcp"
+      "cwd": "/path/to/skills/polymarket-clob-trading-mcp"
     }
   }
 }
@@ -88,7 +88,7 @@ Description=Polymarket Trading MCP
 After=network.target
 
 [Service]
-WorkingDirectory=/path/to/polymarket-kelly-trading-mcp
+WorkingDirectory=/path/to/polymarket-clob-trading-mcp
 ExecStart=node node_modules/tsx/dist/cli.mjs trading-server.ts
 Restart=always
 RestartSec=10

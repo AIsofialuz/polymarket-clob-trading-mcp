@@ -27,7 +27,7 @@ A Model Context Protocol server that lets Claude trade on [Polymarket](https://p
 
 ```bash
 openclaw skills install polymarket-clob-trading-mcp
-cd skills/polymarket-kelly-trading-mcp
+cd skills/polymarket-clob-trading-mcp
 npm install
 ```
 
@@ -42,7 +42,7 @@ Edit `.env` and set your `PRIVATE_KEY`. Everything else (RPC, CLOB API keys) is 
 ### 3. Add to Claude Code
 
 ```bash
-claude mcp add --scope user polymarket-trading -- node /path/to/skills/polymarket-kelly-trading-mcp/node_modules/tsx/dist/cli.mjs /path/to/skills/polymarket-kelly-trading-mcp/trading-server.ts
+claude mcp add --scope user polymarket-trading -- node /path/to/skills/polymarket-clob-trading-mcp/node_modules/tsx/dist/cli.mjs /path/to/skills/polymarket-clob-trading-mcp/trading-server.ts
 ```
 
 ## Tools
