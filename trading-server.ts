@@ -820,6 +820,61 @@ async function autoProvisionClobKeys(): Promise<void> {
   }
 }
 
+// ── Startup health check ──────────────────────────────────────
+
+async function runStartupHealthCheck(): Promise<void> {
+  const lines: string[] = ["", "═".repeat(60), "  POLYMARKET CLOB TRADING MCP  v1.5.0", "═".repeat(60)];
+  let allOk = true;
+
+  const nodeVer = parseInt(process.versions.node.split(".")[0]);
+  if (nodeVer >= 18) {
+    lines.push(`  [OK]   Node.js ${process.versions.node}`);
+  } else {
+    lines.push(`  [FAIL] Node.js ${process.versions.node} — requires 18+`);
+    allOk = false;
+  }
+
+  if (CONFIG.wallet.privateKey && CONFIG.wallet.privateKey.length >= 64) {
+    try {
+      lines.push(`  [OK]   Wallet: ${getWallet().address}`);
+    } catch {
+      lines.push(`  [FAIL] PRIVATE_KEY invalid — check .env`);
+      allOk = false;
+    }
+  } else {
+    lines.push(`  [FAIL] PRIVATE_KEY missing — copy .env.example to .env and set your key`);
+    allOk = false;
+  }
+
+  const nmExists = fs.existsSync(path.join(__dirname, "node_modules"));
+  lines.push(nmExists ? `  [OK]   Dependencies installed` : `  [FAIL] node_modules missing — run: npm install`);
+  if (!nmExists) allOk = false;
+
+  lines.push(CONFIG.clob.hasCredentials
+    ? `  [OK]   CLOB API keys configured`
+    : `  [WARN] CLOB API keys not set — will auto-generate on first trade`);
+
+  try {
+    await gammaFetch("/markets", { limit: 1, closed: false });
+    lines.push(`  [OK]   Polymarket API reachable`);
+  } catch {
+    lines.push(`  [FAIL] Cannot reach Polymarket API — check internet connection`);
+    allOk = false;
+  }
+
+  try {
+    const bal = parseFloat(formatEther(await getProvider().getBalance(getWallet().address)));
+    lines.push(`  [OK]   RPC connected — balance: ${bal.toFixed(4)} POL`);
+  } catch {
+    lines.push(`  [WARN] RPC connection failed — check POLYGON_RPC in .env`);
+  }
+
+  lines.push("═".repeat(60));
+  lines.push(allOk ? "  STATUS: READY TO TRADE" : "  STATUS: ACTION REQUIRED — fix items marked [FAIL] above");
+  lines.push("═".repeat(60), "");
+  console.error(lines.join("\n"));
+}
+
 // ── Start ─────────────────────────────────────────────────────
 
 await autoProvisionClobKeys();
@@ -827,21 +882,7 @@ await autoProvisionClobKeys();
 const transport = new StdioServerTransport();
 await server.connect(transport);
 
-console.error([
-  "",
-  "═".repeat(60),
-  "  🤖 POLYMARKET TRADING MCP  v2.0.0",
-  "═".repeat(60),
-  `  🔑 Key mode: ${CONFIG.security.keyRevealMode}`,
-  `  💰 Max pos:  $${CONFIG.trading.maxPositionSize}`,
-  `  🔐 CLOB L2:  ${CONFIG.clob.hasCredentials ? "✅ API keys ready" : "⚠️  Auto-provision failed — run setup_api_keys"}`,
-  `  📋 Notify:   ✅ RPC relay active`,
-  "═".repeat(60),
-  "  ✅ Server ready",
-  "═".repeat(60),
-  "",
-].join("\n"));
-
+runStartupHealthCheck().catch(() => {});
 initMarketStream();
 
 // Graceful shutdown
