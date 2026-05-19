@@ -2,6 +2,10 @@
 
 An agentic MCP server for trading on [Polymarket](https://polymarket.com) — the world's largest prediction market.
 
+> **Full install guide also available at:** https://github.com/AIsofialuz/polymarket-clob-trading-mcp
+
+---
+
 ## Features
 
 - **Trade** — buy/sell on Polymarket CLOB with Kelly Criterion sizing
@@ -10,16 +14,18 @@ An agentic MCP server for trading on [Polymarket](https://polymarket.com) — th
 - **Wallet info** — address, POL balance, trading limits
 - **Auto API keys** — generates CLOB L2 credentials from your wallet on first run
 
+---
+
 ## Requirements
 
 - Node.js 18+
-- A Polygon wallet with a private key
+- A Polygon wallet private key (with USDC for trading)
 
 ---
 
-## Setup
+## Installation
 
-### Step 1 — Install
+### Step 1 — Install the skill
 
 ```bash
 openclaw skills install polymarket-clob-trading-mcp
@@ -27,7 +33,7 @@ cd skills/polymarket-clob-trading-mcp
 npm install
 ```
 
-### Step 2 — Configure
+### Step 2 — Configure your wallet
 
 ```bash
 cp .env.example .env
@@ -36,12 +42,14 @@ cp .env.example .env
 Open `.env` and set your private key:
 
 ```
-PRIVATE_KEY=your_polygon_wallet_private_key
+PRIVATE_KEY=your_polygon_wallet_private_key_here
 ```
 
 Everything else (RPC endpoint, CLOB API keys) is auto-configured on first boot.
 
 ### Step 3 — Add to Claude
+
+**Option A — Claude Desktop** (`claude_desktop_config.json`):
 
 ```json
 {
@@ -55,19 +63,19 @@ Everything else (RPC endpoint, CLOB API keys) is auto-configured on first boot.
 }
 ```
 
-Or via Claude Code CLI:
+**Option B — Claude Code CLI:**
 
 ```bash
-claude mcp add --scope user polymarket-trading -- node /path/to/node_modules/tsx/dist/cli.mjs /path/to/trading-server.ts
+claude mcp add --scope user polymarket-trading -- node /path/to/skills/polymarket-clob-trading-mcp/node_modules/tsx/dist/cli.mjs /path/to/skills/polymarket-clob-trading-mcp/trading-server.ts
 ```
 
 ---
 
-## Running as a Persistent Service (Autonomous / Agent Use)
+## Running as a Persistent Service
 
-For machines running automated agents, the server must stay alive continuously — not just when Claude is open.
+For autonomous machines that must run 24/7 without Claude being open.
 
-### Using PM2 (recommended)
+### PM2 (recommended — works on Windows, Mac, Linux)
 
 ```bash
 npm install -g pm2
@@ -76,19 +84,19 @@ pm2 save
 pm2 startup
 ```
 
-This keeps the server running on boot and auto-restarts on crash.
+This keeps the server alive on boot and auto-restarts on crash.
 
-### Using a system service (Linux)
+### systemd (Linux only)
 
 Create `/etc/systemd/system/polymarket-mcp.service`:
 
 ```ini
 [Unit]
-Description=Polymarket Trading MCP
+Description=Polymarket CLOB Trading MCP
 After=network.target
 
 [Service]
-WorkingDirectory=/path/to/polymarket-clob-trading-mcp
+WorkingDirectory=/path/to/skills/polymarket-clob-trading-mcp
 ExecStart=node node_modules/tsx/dist/cli.mjs trading-server.ts
 Restart=always
 RestartSec=10
@@ -97,7 +105,7 @@ RestartSec=10
 WantedBy=multi-user.target
 ```
 
-Then:
+Then enable and start:
 
 ```bash
 systemctl enable polymarket-mcp
@@ -110,9 +118,35 @@ systemctl start polymarket-mcp
 
 | Tool | Description |
 |------|-------------|
-| `trade` | Execute buy/sell orders |
-| `analyze_market` | Get BUY/SELL/HOLD signal with Kelly sizing |
+| `trade` | Execute a buy or sell order |
+| `analyze_market` | BUY/SELL/HOLD signal with Kelly Criterion position sizing |
 | `search_markets` | Search open markets by keyword |
-| `wallet_info` | View balance and trading limits |
+| `wallet_info` | Wallet address, POL balance, and trading limits |
 | `push_alert` | Push a manual alert to the notification channel |
-| `setup_api_keys` | Generate CLOB L2 credentials |
+| `setup_api_keys` | Generate Polymarket CLOB L2 API credentials |
+
+---
+
+## Prediction Engine
+
+1. **Order book imbalance** — nudges probability estimate from bid/ask depth ratio
+2. **Confidence score** — built from depth balance, spread tightness, 24h volume
+3. **Kelly Criterion** — quarter-Kelly position sizing scaled by confidence
+4. **Risk score** — penalises low liquidity, wide spreads, low confidence
+
+---
+
+## Troubleshooting
+
+**`PRIVATE_KEY missing or invalid`**
+- Make sure you copied `.env.example` to `.env` and filled in your real private key.
+
+**`CLOB API keys not found`**
+- Run the `setup_api_keys` tool once. Keys are auto-generated from your wallet and saved to `.env`.
+
+**Server not connecting to Claude**
+- Verify the `cwd` path in your MCP config points to the correct install folder.
+- Make sure `npm install` completed successfully.
+
+**PM2 not starting on boot**
+- Run `pm2 startup` and follow the command it outputs, then run `pm2 save`.
