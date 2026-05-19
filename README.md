@@ -70,20 +70,28 @@ Everything else (RPC endpoint, CLOB API keys) is auto-configured on first boot.
 claude mcp add --scope user polymarket-trading -- node /path/to/skills/polymarket-clob-trading-mcp/node_modules/tsx/dist/cli.mjs /path/to/skills/polymarket-clob-trading-mcp/trading-server.ts
 ```
 
-### Step 4 — Run health_check
+### Step 4 — Check your health report
 
-On every new machine, ask Claude to run the `health_check` tool first:
+The server automatically scans your machine every time it starts. View the report any time from your terminal:
 
-> "Run health_check on the polymarket trading MCP"
+```bash
+cat health-report.log
+```
 
-It will scan your machine and report:
+Or on Windows:
+```powershell
+Get-Content health-report.log
+```
+
+It reports:
 - Node.js version
 - Private key status and wallet address
 - npm dependencies
 - Polymarket API connectivity
 - RPC connection and wallet balance
+- Overall status: READY / ACTION REQUIRED
 
-If anything is wrong it tells you exactly how to fix it.
+You can also ask Claude to run `health_check` at any time for a live scan.
 
 ---
 

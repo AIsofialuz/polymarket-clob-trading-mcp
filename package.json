@@ -1,6 +1,6 @@
 {
   "name": "polymarket-clob-trading-mcp",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "description": "MCP server for Polymarket prediction markets — search, analyze, and execute trades via the Polymarket CLOB.",
   "type": "module",
   "main": "dist/trading-server.js",

@@ -872,7 +872,15 @@ async function runStartupHealthCheck(): Promise<void> {
   lines.push("═".repeat(60));
   lines.push(allOk ? "  STATUS: READY TO TRADE" : "  STATUS: ACTION REQUIRED — fix items marked [FAIL] above");
   lines.push("═".repeat(60), "");
-  console.error(lines.join("\n"));
+
+  const report = lines.join("\n");
+  const reportPath = path.join(__dirname, "health-report.log");
+
+  // Write to file so user can always view it from their terminal
+  try { fs.writeFileSync(reportPath, `Last checked: ${new Date().toISOString()}\n${report}`); } catch { /* ignore */ }
+
+  // Also write to stderr (visible in PM2 logs and direct terminal runs)
+  process.stderr.write(report);
 }
 
 // ── Start ─────────────────────────────────────────────────────
