@@ -527,6 +527,11 @@ server.setRequestHandler(ListToolsRequestSchema, async (): Promise<ListToolsResu
       description: "Generate Polymarket CLOB API keys (L2 auth) from your wallet. Run once, then paste the output into your .env file to enable trading.",
       inputSchema: { type: "object", properties: {} },
     },
+    {
+      name: "health_check",
+      description: "Scan this machine and verify everything required to trade is correctly installed and configured. Run this first on any new machine before using other tools.",
+      inputSchema: { type: "object", properties: {} },
+    },
   ] satisfies Tool[],
 }));
 
@@ -713,6 +718,63 @@ server.setRequestHandler(CallToolRequestSchema, async (req): Promise<CallToolRes
             CLOB_SECRET:     apiKey.secret,
             CLOB_PASSPHRASE: apiKey.passphrase,
           },
+        })] };
+      }
+
+      // ── health_check ───────────────────────────────────────
+      case "health_check": {
+        const checks: Record<string, { status: "ok" | "warn" | "fail"; detail: string }> = {};
+
+        // Node.js version
+        const nodeVer = parseInt(process.versions.node.split(".")[0]);
+        checks.node_version = nodeVer >= 18
+          ? { status: "ok",   detail: `Node.js ${process.versions.node}` }
+          : { status: "fail", detail: `Node.js ${process.versions.node} — requires 18+. Download from nodejs.org` };
+
+        // .env / private key
+        checks.private_key = CONFIG.wallet.privateKey && CONFIG.wallet.privateKey.length >= 64
+          ? { status: "ok",   detail: `Set — wallet ${getWallet().address}` }
+          : { status: "fail", detail: "PRIVATE_KEY missing or invalid in .env — copy .env.example to .env and set your key" };
+
+        // CLOB API keys
+        checks.clob_api_keys = CONFIG.clob.hasCredentials
+          ? { status: "ok",   detail: `Configured (${CONFIG.clob.apiKey.slice(0, 8)}…)` }
+          : { status: "warn", detail: "Not set — will auto-generate on first trade. Or run setup_api_keys now." };
+
+        // node_modules
+        const nmExists = fs.existsSync(path.join(__dirname, "node_modules"));
+        checks.dependencies = nmExists
+          ? { status: "ok",   detail: "node_modules present" }
+          : { status: "fail", detail: "node_modules missing — run: npm install" };
+
+        // Polymarket API reachability
+        try {
+          await gammaFetch("/markets", { limit: 1, closed: false });
+          checks.polymarket_api = { status: "ok", detail: "Polymarket Gamma API reachable" };
+        } catch {
+          checks.polymarket_api = { status: "fail", detail: "Cannot reach Polymarket API — check internet connection" };
+        }
+
+        // RPC / wallet balance
+        try {
+          const bal = parseFloat(formatEther(await getProvider().getBalance(getWallet().address)));
+          checks.rpc_connection = { status: "ok", detail: `Polygon RPC reachable — wallet balance: ${bal.toFixed(4)} POL` };
+        } catch {
+          checks.rpc_connection = { status: "warn", detail: "RPC connection failed — check POLYGON_RPC in .env" };
+        }
+
+        const failed  = Object.values(checks).filter(c => c.status === "fail");
+        const warned  = Object.values(checks).filter(c => c.status === "warn");
+        const overall = failed.length > 0 ? "NOT READY" : warned.length > 0 ? "READY WITH WARNINGS" : "READY";
+
+        return { content: [mkText({
+          overall,
+          checks,
+          next_steps: failed.length > 0
+            ? failed.map(c => c.detail)
+            : warned.length > 0
+              ? warned.map(c => c.detail)
+              : ["All systems go — you can start trading."],
         })] };
       }
 
