@@ -34,19 +34,52 @@ cd skills/polymarket-clob-trading-mcp
 npm install
 ```
 
-### Step 2 — Configure your wallet
+### Step 2 — Run setup
 
 ```bash
-cp .env.example .env
+npm install
 ```
 
-Open `.env` and set your private key:
+The setup script runs **automatically** after install. It will:
+- Check your Node.js version
+- Create `.env` from `.env.example` if it doesn't exist
+- Prompt you to enter your private key if not set
+- Test Polymarket API connectivity
+- Test your Polygon RPC connection
+- Show a live status for each check with a final READY / ACTION REQUIRED result
 
-```
-PRIVATE_KEY=your_polygon_wallet_private_key_here
+You can re-run it anytime:
+
+```bash
+npm run setup
 ```
 
-Everything else (RPC endpoint, CLOB API keys) is auto-configured on first boot.
+Example output:
+```
+════════════════════════════════════════════════════════════
+  POLYMARKET CLOB TRADING MCP — SETUP
+════════════════════════════════════════════════════════════
+
+  Step 1 — Node.js version
+  ✔ OK    Node.js 20.11.0
+
+  Step 2 — Wallet configuration
+  ✔ OK    .env file found
+  ✔ OK    PRIVATE_KEY is set
+
+  Step 3 — Dependencies
+  ✔ OK    node_modules installed
+
+  Step 4 — Polymarket API connectivity
+  ✔ OK    Polymarket API reachable
+
+  Step 5 — Polygon RPC connection
+  ✔ OK    Connected — latest block #67,432,891
+
+════════════════════════════════════════════════════════════
+  ✓ All checks passed — ready to trade!
+════════════════════════════════════════════════════════════
+```
 
 ### Step 3 — Add to Claude
 
@@ -72,26 +105,18 @@ claude mcp add --scope user polymarket-trading -- node /path/to/skills/polymarke
 
 ### Step 4 — Check your health report
 
-The server automatically scans your machine every time it starts. View the report any time from your terminal:
+Every time the server starts, it automatically scans your machine and writes a health report. View it from your terminal:
 
 ```bash
+# Linux / Mac
 cat health-report.log
-```
 
-Or on Windows:
-```powershell
+# Windows
 Get-Content health-report.log
 ```
 
-It reports:
-- Node.js version
-- Private key status and wallet address
-- npm dependencies
-- Polymarket API connectivity
-- RPC connection and wallet balance
-- Overall status: READY / ACTION REQUIRED
-
-You can also ask Claude to run `health_check` at any time for a live scan.
+You can also ask Claude to run a live scan at any time:
+> "Run health_check on the polymarket trading MCP"
 
 ---
 
