@@ -1,0 +1,5 @@
+node_modules/
+.env
+dist/
+*.log
+rpc-proxy.mjs

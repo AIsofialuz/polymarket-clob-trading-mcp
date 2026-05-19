@@ -1,0 +1,26 @@
+{
+  "name": "polymarket-clob-trading-mcp",
+  "version": "1.1.0",
+  "description": "MCP server for Polymarket prediction markets — search, analyze, and execute trades via the Polymarket CLOB.",
+  "type": "module",
+  "main": "dist/trading-server.js",
+  "scripts": {
+    "dev":   "tsx watch trading-server.ts",
+    "start": "node dist/trading-server.js",
+    "build": "tsc"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "@polymarket/clob-client":   "^3.0.0",
+    "dotenv":                    "^16.4.0",
+    "ethers":                    "^6.11.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx":         "^4.19.0",
+    "typescript":  "^5.4.0"
+  }
+}
