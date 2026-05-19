@@ -13,6 +13,7 @@ An agentic MCP server for trading on [Polymarket](https://polymarket.com) — th
 - **Search** — keyword search across all open markets
 - **Wallet info** — address, POL balance, trading limits
 - **Auto API keys** — generates CLOB L2 credentials from your wallet on first run
+- **Health check** — scans your machine and verifies everything is correctly set up
 
 ---
 
@@ -69,6 +70,21 @@ Everything else (RPC endpoint, CLOB API keys) is auto-configured on first boot.
 claude mcp add --scope user polymarket-trading -- node /path/to/skills/polymarket-clob-trading-mcp/node_modules/tsx/dist/cli.mjs /path/to/skills/polymarket-clob-trading-mcp/trading-server.ts
 ```
 
+### Step 4 — Run health_check
+
+On every new machine, ask Claude to run the `health_check` tool first:
+
+> "Run health_check on the polymarket trading MCP"
+
+It will scan your machine and report:
+- Node.js version
+- Private key status and wallet address
+- npm dependencies
+- Polymarket API connectivity
+- RPC connection and wallet balance
+
+If anything is wrong it tells you exactly how to fix it.
+
 ---
 
 ## Running as a Persistent Service
@@ -118,12 +134,26 @@ systemctl start polymarket-mcp
 
 | Tool | Description |
 |------|-------------|
+| `health_check` | Scan machine — verify Node.js, wallet key, dependencies, API connectivity |
 | `trade` | Execute a buy or sell order |
 | `analyze_market` | BUY/SELL/HOLD signal with Kelly Criterion position sizing |
 | `search_markets` | Search open markets by keyword |
 | `wallet_info` | Wallet address, POL balance, and trading limits |
 | `push_alert` | Push a manual alert to the notification channel |
 | `setup_api_keys` | Generate Polymarket CLOB L2 API credentials |
+
+> **Always run `health_check` first on any new machine.**
+
+---
+
+## Recommended Tool Order (fresh machine)
+
+1. `health_check` — verify everything works
+2. `setup_api_keys` — only if CLOB keys are missing
+3. `wallet_info` — confirm wallet and balance
+4. `search_markets` — find markets
+5. `analyze_market` — get signal before trading
+6. `trade` — execute orders
 
 ---
 
@@ -139,14 +169,19 @@ systemctl start polymarket-mcp
 ## Troubleshooting
 
 **`PRIVATE_KEY missing or invalid`**
-- Make sure you copied `.env.example` to `.env` and filled in your real private key.
+Run `health_check` — it will pinpoint the issue. Make sure `.env` exists and has your real private key.
 
 **`CLOB API keys not found`**
-- Run the `setup_api_keys` tool once. Keys are auto-generated from your wallet and saved to `.env`.
+Run `setup_api_keys` — keys are auto-generated from your wallet and saved to `.env`.
+
+**`node_modules missing`**
+Run `npm install` inside the skill folder.
 
 **Server not connecting to Claude**
-- Verify the `cwd` path in your MCP config points to the correct install folder.
-- Make sure `npm install` completed successfully.
+Verify the `cwd` path in your MCP config points to the correct install folder.
 
 **PM2 not starting on boot**
-- Run `pm2 startup` and follow the command it outputs, then run `pm2 save`.
+Run `pm2 startup`, follow the command it outputs, then run `pm2 save`.
+
+**Still stuck?**
+Full guide always available at: https://github.com/AIsofialuz/polymarket-clob-trading-mcp
